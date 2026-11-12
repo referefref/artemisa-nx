@@ -17,6 +17,7 @@
 
 import sys
 import os
+import re
 
 # Set a path to the main root
 sys.path.append("../")
@@ -197,7 +198,7 @@ def GetIPfromSIP(HeaderLine):
             IPaddr = IPaddr.split(" ")[len(IPaddr.split(" "))-1]
         IPaddr = IPaddr.split(":")[0]
         IPaddr = IPaddr.split("<")[len(IPaddr.split("<"))-1]
-    except Exception, e:
+    except Exception as e:
         logger.error("Error in GetIPfromSIP function. Details: " + str(e))
         return ""
     
@@ -239,7 +240,7 @@ def GetPortfromSIP(HeaderLine):
             Port = Port.split(":")[len(Port.split(":"))-1].strip()
         else:
             return ""
-    except Exception, e:
+    except Exception as e:
         logger.error("Error in GetPortfromSIP function. Details: " + str(e))
         return ""
         
@@ -264,7 +265,7 @@ def GetExtensionfromSIP(HeaderLine):
         Extension = HeaderLine.split("sip:")[1]
         Extension = Extension.split("@")[0]
         
-    except Exception, e:
+    except Exception as e:
         logger.error("Error in GetExtensionfromSIP function. Details: " + str(e))
         return ""
         
@@ -316,7 +317,7 @@ def GetConfigSection(strFilename, strSection):
 
         File.close()
         
-    except Exception, e:
+    except Exception as e:
         logger.error("Error in GetConfigSection function. Details: " + str(e))
         return ""
     
@@ -336,6 +337,14 @@ def RemoveComments(strLine):
             break
         
     return strLine
+
+def IsSafeArgument(strValue):
+    """
+    Returns True if a value taken from a SIP message (host name, IP address or port) can be
+    passed as a command-line argument: letters, digits, dots, hyphens, colons and
+    underscores only, and not starting with a hyphen (artemisa-nx).
+    """
+    return re.match(r"^[A-Za-z0-9_.:\[\]][A-Za-z0-9_.:\-\[\]]{0,253}$", strValue or "") is not None
 
 def GetCLIprompt():
     if os.getenv('HOSTNAME') is None:

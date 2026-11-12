@@ -18,20 +18,20 @@
 
 import os
 from time import strftime
-from mail import Email
+from .mail import Email
 
-from commons import GetSIPHeader
-from commons import Search
-from commons import GetTimeClass
-from commons import GetIPfromSIP
-from commons import GetPortfromSIP
-from commons import GetExtensionfromSIP
-from commons import GetTransportfromSIP
-from commons import RemoveComments
-from commons import CallData
-from check_fingerprint import CheckFingerprint
-from check_dns import CheckDNS
-from check_port import CheckPort
+from .commons import GetSIPHeader
+from .commons import Search
+from .commons import GetTimeClass
+from .commons import GetIPfromSIP
+from .commons import GetPortfromSIP
+from .commons import GetExtensionfromSIP
+from .commons import GetTransportfromSIP
+from .commons import RemoveComments
+from .commons import CallData
+from .check_fingerprint import CheckFingerprint
+from .check_dns import CheckDNS
+from .check_port import CheckPort
 from modules.logger import logger
 
 class Classifier():
@@ -99,7 +99,7 @@ class Classifier():
             prtString = "| + Checking " + ip_to_analyze[i] + "..."; self.CallInformation.Results_File_Buffer += "\n" + prtString; logger.info(prtString)
             prtString = "| |"; self.CallInformation.Results_File_Buffer += "\n" + prtString; logger.info(prtString)            
             DNS_Result = CheckDNS(ip_to_analyze[i], self.verbose)
-            if DNS_Result <= 0:
+            if isinstance(DNS_Result, int):
                 prtString = "| | IP cannot be resolved."; self.CallInformation.Results_File_Buffer += "\n" + prtString; logger.info(prtString)
                 prtString = "| |"; self.CallInformation.Results_File_Buffer += "\n" + prtString; logger.info(prtString)
                 prtString = "| | Category: Spoofed message"; self.CallInformation.Results_File_Buffer += "\n" + prtString; logger.info(prtString)
@@ -136,7 +136,7 @@ class Classifier():
             
         strResult = CheckPort(self.CallInformation.Contact_IP, self.CallInformation.Contact_Port, self.CallInformation.Contact_Transport, self.verbose)
             
-        if strResult == 0 or strResult < 0:
+        if isinstance(strResult, int):
             prtString = "| |  Error while scanning the port."; self.CallInformation.Results_File_Buffer += "\n" + prtString; logger.info(prtString)
             prtString = "| |"; self.CallInformation.Results_File_Buffer += "\n" + prtString; logger.info(prtString)
             prtString = "| |  Category: -"; self.CallInformation.Results_File_Buffer += "\n" + prtString; logger.info(prtString)
@@ -182,7 +182,7 @@ class Classifier():
 
             strResult = CheckPort(self.CallInformation.Contact_IP, strRTPPort, "udp", self.verbose)
                 
-            if strResult == 0 or strResult < 0:
+            if isinstance(strResult, int):
                 prtString = "| | Error while scanning the port."; self.CallInformation.Results_File_Buffer += "\n" + prtString; logger.info(prtString)
                 prtString = "| |"; self.CallInformation.Results_File_Buffer += "\n" + prtString; logger.info(prtString)
                 prtString = "| | Category: -"; self.CallInformation.Results_File_Buffer += "\n" + prtString; logger.info(prtString)
@@ -255,7 +255,7 @@ class Classifier():
             # We determine the existence of the proxy by checking the port with nmap
             strResult = CheckPort(self.CallInformation.Via[0][0], self.CallInformation.Via[0][1], self.CallInformation.Via[0][2], self.verbose)
                 
-            if strResult == 0 or strResult < 0:
+            if isinstance(strResult, int):
                 prtString = "| | Error while scanning."; self.CallInformation.Results_File_Buffer += "\n" + prtString; logger.info(prtString)
                 prtString = "| |"; self.CallInformation.Results_File_Buffer += "\n" + prtString; logger.info(prtString)
                 prtString = "| | Category: -"; self.CallInformation.Results_File_Buffer += "\n" + prtString; logger.info(prtString)

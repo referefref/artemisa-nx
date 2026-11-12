@@ -43,28 +43,28 @@ try:
     """
     import pjsua as pj
 except ImportError:
-    print ""
-    print "Critical error:"
-    print "    PJSIP library module MUST be installed!"
-    print ""
-    print "Download it from:"
-    print "    http://www.pjsip.org/download.htm"
-    print ""
-    print "    or, if you have the wget, can do in a console:"
-    print ""
-    print "    wget http://www.pjsip.org/release/1.8.10/pjproject-1.8.10.tar.bz2"
-    print ""
-    print "Installation steps:"
-    print "    http://trac.pjsip.org/repos/wiki/Python_SIP/Build_Install"
-    print ""
-    print "       In a nutshell:"
-    print ""
-    print "       1) Check that make, gcc, binutils, Python, and Python-devel are installed."
-    print "       2) Build the PJSIP libraries first with \"# ./configure && make dep && make\" commands."
-    print "          Note: if fails try:./configure CFLAGS=-fPIC"
-    print "       3) Go to the pjsip-apps/src/python directory."
-    print "       4) Run \'# python setup.py install\' or just \'# make install\'."
-    print ""
+    print("")
+    print("Critical error:")
+    print("    PJSIP library module MUST be installed!")
+    print("")
+    print("Download it from:")
+    print("    http://www.pjsip.org/download.htm")
+    print("")
+    print("    or, if you have the wget, can do in a console:")
+    print("")
+    print("    wget http://www.pjsip.org/release/1.8.10/pjproject-1.8.10.tar.bz2")
+    print("")
+    print("Installation steps:")
+    print("    http://trac.pjsip.org/repos/wiki/Python_SIP/Build_Install")
+    print("")
+    print("       In a nutshell:")
+    print("")
+    print("       1) Check that make, gcc, binutils, Python, and Python-devel are installed.")
+    print("       2) Build the PJSIP libraries first with \"# ./configure && make dep && make\" commands.")
+    print("          Note: if fails try:./configure CFLAGS=-fPIC")
+    print("       3) Go to the pjsip-apps/src/python directory.")
+    print("       4) Run \'# python setup.py install\' or just \'# make install\'.")
+    print("")
     sys.exit(1)
 
 import os
@@ -75,7 +75,7 @@ from time import gmtime
 import threading                                # Use of threads
 from subprocess import Popen
 from subprocess import PIPE
-import ConfigParser                             # Read configuration files
+import configparser                             # Read configuration files
 from optparse import OptionParser               # For parsing command line parameters
 
 from libs.IPy.IPy import IP                     # Module to deal with IPs
@@ -266,9 +266,9 @@ class MyCallCallback(pj.CallCallback):
     """
     def __init__(self, lib, current_call, Sound_enabled, Playfile):
         self.rec_slot = None
-        self.rec_id = None
+        self.rec_id = -1
         self.player_slot = None
-        self.player_id = None
+        self.player_id = -1
 
         self.lib = lib
         self.Sound_enabled = Sound_enabled
@@ -528,15 +528,15 @@ class Artemisa(object):
         self.CheckCommandLineParameters()
 
 
-        print "Artemisa v" + self.VERSION + " Copyright (C) 2009-2011 Mohamed Nassar, Rodrigo do Carmo, and Pablo Masri"
-        print ""
-        print "This program comes with ABSOLUTELY NO WARRANTY; for details type 'show warranty'."
-        print "This is free software, and you are welcome to redistribute it under certain"
-        print "conditions; type 'show license' for details."
-        print ""
-        print ""
-        print "Type 'help' for help."
-        print ""
+        print("Artemisa v" + self.VERSION + " Copyright (C) 2009-2011 Mohamed Nassar, Rodrigo do Carmo, and Pablo Masri")
+        print("")
+        print("This program comes with ABSOLUTELY NO WARRANTY; for details type 'show warranty'.")
+        print("This is free software, and you are welcome to redistribute it under certain")
+        print("conditions; type 'show license' for details.")
+        print("")
+        print("")
+        print("Type 'help' for help.")
+        print("")
         
         # Read the configuration file artemisa.conf
         self.LoadConfiguration()
@@ -570,7 +570,7 @@ class Artemisa(object):
         # Initialize the PJSUA library
         try:
             self.lib.init(self.ua_cfg, self.log_cfg, self.media_cfg)
-        except Exception, e:
+        except Exception as e:
             logger.critical(str(e))
             sys.exit(1)
     
@@ -591,19 +591,19 @@ class Artemisa(object):
         # If the command line parameter "-g" has been given then:
         if self.Show_sound_devices:
             a = 0
-            print ""
-            print ""
-            print "List of available sound devices:"
-            print ""
+            print("")
+            print("")
+            print("List of available sound devices:")
+            print("")
             if len(self.lib.enum_snd_dev()) == 0:
-                print "No sound device detected."
+                print("No sound device detected.")
             else:
                 for item in self.lib.enum_snd_dev():
-                    print "Index=" + str(a) + " Name=" + item.name
+                    print("Index=" + str(a) + " Name=" + item.name)
                     a += 1
 
-            print ""
-            print ""
+            print("")
+            print("")
         
             exit()
 
@@ -619,32 +619,34 @@ class Artemisa(object):
                 if len(self.lib.enum_snd_dev()) > 0:
                     self.lib.set_snd_dev(self.Sound_device,self.Sound_device)
                 else:
-                    logger.warning("Audio device not found. Calls will not be recorded.")
-                    self.Sound_enabled = False
+                    # artemisa-nx: servers and containers have no sound card. PJSUA's null audio
+                    # device still clocks the conference bridge, so calls are played and recorded.
+                    self.lib.set_null_snd_dev()
+                    logger.warning("Audio device not found. Using the null audio device; calls will still be recorded.")
             except:
                 logger.warning("Audio device not found. Calls will not be recorded.")
                 self.Sound_enabled = False
         else:
-            print "The audio is disabled. Calls will not be recorded."
+            print("The audio is disabled. Calls will not be recorded.")
 
                 
         Unregister = False
 
-        print "SIP User-Agent listening on: " + self.Local_IP + ":" + self.Local_port
+        print("SIP User-Agent listening on: " + self.Local_IP + ":" + self.Local_port)
     
-        print "Behaviour mode: " + self.behaviour_mode
+        print("Behaviour mode: " + self.behaviour_mode)
 
         if len(self.Servers) == 0:
-            print "No extensions have been configured."
+            print("No extensions have been configured.")
         else:
             if not self.No_registration_param:
-                print "Starting extensions registration process..."
+                print("Starting extensions registration process...")
         
                 # Register each account
                 for i in range(len(self.Servers)):
                     self.Servers[i].Register()
             else:
-                print "Server registration is disabled. No extension will be registered."
+                print("Server registration is disabled. No extension will be registered.")
                 
                 # One accound must exist in pjsip; otherwise it crashes.
                 self.acc = self.lib.create_account_for_transport(self.transp)
@@ -666,32 +668,32 @@ class Artemisa(object):
     
         Shows the help
         """
-        print ""    
-        print "Commands list:"
-        print ""
-        print "mode active                  Change behaviour mode to active"
-        print "mode passive                 Change behaviour mode to passive"
-        print "mode aggressive              Change behaviour mode to aggressive"
-        print ""
-        print "verbose on                   Turn verbose mode on (it shows more information)"
-        print "verbose off                  Turn verbose mode off"
-        print "email on                     Turn e-mail report on"
-        print "email off                    Turn e-mail report off"
-        print ""
-        print "show statistics, stats       Show the statistics of the current instance."
-        print ""
-        print "clean logs                   Remove all log files"
-        print "clean results                Remove all results files"
-        print "clean calls                  Remove all the recorded calls"
-        print "clean all                    Remove all files"
-        print "                             (Use these commands carefully)"
-        print ""
-        print "hangup all                   Hang up all calls"
-        print ""
-        print "show warranty                Show the program warrany"
-        print "show license                 Show the program license"
-        print ""
-        print "s, q, quit, exit             Exit"
+        print("")    
+        print("Commands list:")
+        print("")
+        print("mode active                  Change behaviour mode to active")
+        print("mode passive                 Change behaviour mode to passive")
+        print("mode aggressive              Change behaviour mode to aggressive")
+        print("")
+        print("verbose on                   Turn verbose mode on (it shows more information)")
+        print("verbose off                  Turn verbose mode off")
+        print("email on                     Turn e-mail report on")
+        print("email off                    Turn e-mail report off")
+        print("")
+        print("show statistics, stats       Show the statistics of the current instance.")
+        print("")
+        print("clean logs                   Remove all log files")
+        print("clean results                Remove all results files")
+        print("clean calls                  Remove all the recorded calls")
+        print("clean all                    Remove all files")
+        print("                             (Use these commands carefully)")
+        print("")
+        print("hangup all                   Hang up all calls")
+        print("")
+        print("show warranty                Show the program warrany")
+        print("show license                 Show the program license")
+        print("")
+        print("s, q, quit, exit             Exit")
      
     def ReadKeyboard(self): 
         """
@@ -701,44 +703,51 @@ class Artemisa(object):
     
         while True:
         
-            s = raw_input(CLIprompt).strip()
+            try:
+                s = input(CLIprompt).strip()
+            except EOFError:
+                # artemisa-nx: no console (for example when run as a service). Keep running
+                # until the process is stopped.
+                print("No console input; running until stopped.")
+                while True:
+                    sleep(3600)
         
             if s == "help":
                 self.ShowHelp()
         
             elif s == "show statistics" or s == "stats":
-                print "Artemisa's instance statistics"
-                print "-------------------------------------------------------------------"
-                print ""
-                print "INVITE messages received: " + str(self.N_INVITE)
-                print "OPTIONS messages received: " + str(self.N_OPTIONS)
-                print "REGISTER messages received: " + str(self.N_REGISTER)
+                print("Artemisa's instance statistics")
+                print("-------------------------------------------------------------------")
+                print("")
+                print("INVITE messages received: " + str(self.N_INVITE))
+                print("OPTIONS messages received: " + str(self.N_OPTIONS))
+                print("REGISTER messages received: " + str(self.N_REGISTER))
                 if self.Flood: 
                     FloodDetected = "yes"
                 else:
                     FloodDetected = "no"
-                print "Flood detected?: " + FloodDetected
-                print ""
+                print("Flood detected?: " + FloodDetected)
+                print("")
                 
             elif s == "hangup all":
                 self.lib.hangup_all()
-                print "Done"
+                print("Done")
             
             elif s == "clean logs":
                 Process = Popen("rm -f " + LOGS_DIR + "*.log", shell=True, stdout=PIPE)
                 Process.wait()
                 # FIXME: Here is a bug! If the logs are deleted the logger cannot continue logging.
-                print "Cleaned"
+                print("Cleaned")
             
             elif s == "clean results":
                 Process = Popen("rm -f " + RESULTS_DIR + "*", shell=True, stdout=PIPE)
                 Process.wait()
-                print "Cleaned"
+                print("Cleaned")
             
             elif s == "clean calls":
                 Process = Popen("rm -f " + RECORDED_CALLS_DIR + "*", shell=True, stdout=PIPE)
                 Process.wait()
-                print "Cleaned"
+                print("Cleaned")
                         
             elif s == "clean all":
                 Process = Popen("rm -f " + LOGS_DIR + "*.log", shell=True, stdout=PIPE)
@@ -747,7 +756,7 @@ class Artemisa(object):
                 Process.wait()
                 Process = Popen("rm -f " + RECORDED_CALLS_DIR + "*", shell=True, stdout=PIPE)
                 Process.wait()
-                print "Cleaned"
+                print("Cleaned")
                                
             elif s == "mode active":
                 self.behaviour_mode = "active"
@@ -778,42 +787,42 @@ class Artemisa(object):
                 logger.info("E-mail reporting off.")
 
             elif s == "show warranty":
-                print ""
-                print "THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY"
-                print "APPLICABLE LAW. EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT"
-                print "HOLDERS AND/OR OTHER PARTIES PROVIDE THE PROGRAM \"AS IS\" WITHOUT WARRANTY"
-                print "OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO,"
-                print "THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR"
-                print "PURPOSE. THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM"
-                print "IS WITH YOU. SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF"
-                print "ALL NECESSARY SERVICING, REPAIR OR CORRECTION."
-                print ""
-                print "IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING"
-                print "WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MODIFIES AND/OR CONVEYS"
-                print "THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES, INCLUDING ANY"
-                print "GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE"
-                print "USE OR INABILITY TO USE THE PROGRAM (INCLUDING BUT NOT LIMITED TO LOSS OF"
-                print "DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD"
-                print "PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER PROGRAMS),"
-                print "EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF"
-                print "SUCH DAMAGES."
-                print ""
+                print("")
+                print("THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY")
+                print("APPLICABLE LAW. EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT")
+                print("HOLDERS AND/OR OTHER PARTIES PROVIDE THE PROGRAM \"AS IS\" WITHOUT WARRANTY")
+                print("OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO,")
+                print("THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR")
+                print("PURPOSE. THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM")
+                print("IS WITH YOU. SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF")
+                print("ALL NECESSARY SERVICING, REPAIR OR CORRECTION.")
+                print("")
+                print("IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING")
+                print("WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MODIFIES AND/OR CONVEYS")
+                print("THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES, INCLUDING ANY")
+                print("GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE")
+                print("USE OR INABILITY TO USE THE PROGRAM (INCLUDING BUT NOT LIMITED TO LOSS OF")
+                print("DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD")
+                print("PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER PROGRAMS),")
+                print("EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF")
+                print("SUCH DAMAGES.")
+                print("")
             
             elif s == "show license":
-                print ""
-                print "This program is free software: you can redistribute it and/or modify"
-                print "it under the terms of the GNU General Public License as published by"
-                print "the Free Software Foundation, either version 3 of the License, or"
-                print "(at your option) any later version."
-                print ""
-                print "This program is distributed in the hope that it will be useful,"
-                print "but WITHOUT ANY WARRANTY; without even the implied warranty of"
-                print "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the"
-                print "GNU General Public License for more details."
-                print ""
-                print "You should have received a copy of the GNU General Public License"
-                print "along with this program. If not, see <http://www.gnu.org/licenses/>."
-                print ""
+                print("")
+                print("This program is free software: you can redistribute it and/or modify")
+                print("it under the terms of the GNU General Public License as published by")
+                print("the Free Software Foundation, either version 3 of the License, or")
+                print("(at your option) any later version.")
+                print("")
+                print("This program is distributed in the hope that it will be useful,")
+                print("but WITHOUT ANY WARRANTY; without even the implied warranty of")
+                print("MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the")
+                print("GNU General Public License for more details.")
+                print("")
+                print("You should have received a copy of the GNU General Public License")
+                print("along with this program. If not, see <http://www.gnu.org/licenses/>.")
+                print("")
             
             elif s == "q" or s == "s" or s == "quit" or s == "exit":
                 break
@@ -822,13 +831,13 @@ class Artemisa(object):
                 continue
 
             else:
-                print "Command not found. Type \"help\" for the list of commands."
+                print("Command not found. Type \"help\" for the list of commands.")
 
     def LoadExtensions(self):
         """
         Load configurations from file extensions.conf
         """
-        config = ConfigParser.ConfigParser()
+        config = configparser.ConfigParser()
         try:
             Temp = config.read(EXTENSIONS_FILE_PATH)
         except:
@@ -847,7 +856,7 @@ class Artemisa(object):
                 for item in config.sections():
                     self.Extensions.append(Extension(item, config.get(item, "username"), config.get(item, "password")))
                     
-            except Exception, e:
+            except Exception as e:
                 logger.critical("The configuration file extensions.conf cannot be correctly read. Check it out carefully. More info: " + str(e))
                 sys.exit(1)
 
@@ -857,7 +866,7 @@ class Artemisa(object):
         """
         Load configurations from file servers.conf
         """
-        config = ConfigParser.ConfigParser()
+        config = configparser.ConfigParser()
         try:
             Temp = config.read(SERVERS_FILE_PATH)
         except:
@@ -899,8 +908,8 @@ class Artemisa(object):
                                             self.Sound_enabled,
                                             self.Playfile))
             
-            except Exception, e:
-                print str(e)
+            except Exception as e:
+                print(str(e))
                 logger.critical("The configuration file servers.conf cannot be correctly read. Check it out carefully. More info: " + str(e))
                 sys.exit(1)
 
@@ -910,7 +919,7 @@ class Artemisa(object):
         """
         Load configurations from file artemisa.conf
         """
-        config = ConfigParser.ConfigParser()
+        config = configparser.ConfigParser()
         try:
             Temp = config.read(CONFIG_FILE_PATH)
         except:
@@ -990,14 +999,14 @@ class Artemisa(object):
                     self.behaviour_mode = "passive"
                     logger.info("behaviour_mode value is invalid. Changed to passive.")
                     
-            except Exception, e:
+            except Exception as e:
                 logger.critical("The configuration file artemisa.conf cannot be correctly read. Check it out carefully. Details: " + str(e))
                 sys.exit(1)
 
         del config
         
         # Now it reads the actions.conf file to load the user-defined parameters to sent when calling the scripts
-        config = ConfigParser.ConfigParser()
+        config = configparser.ConfigParser()
         try:
             Temp = config.read(ACTIONS_FILE_PATH)
         except:
@@ -1059,7 +1068,7 @@ class Artemisa(object):
             File.write(Results)
             File.close()
             logger.info("This report has been saved on file " + Filename)
-        except Exception, e:
+        except Exception as e:
             logger.error("Cannot save file " + Filename + ". Details: " + str(e))
             
     def SaveResultsToHTML(self, Results, Filename):
@@ -1074,7 +1083,7 @@ class Artemisa(object):
             File.write(Results)
             File.close()
             logger.info("NOTICE This report has been saved on file " + Filename)
-        except Exception, e:
+        except Exception as e:
             logger.error("Cannot save file " + Filename + ". Details: " + str(e))
             
         return Filename
@@ -1101,7 +1110,7 @@ class Artemisa(object):
                     a += 1
                 else:
                     break
-        except Exception, e:
+        except Exception as e:
             logger.error("Cannot create the results file " + Filename + ". Details: " + str(e))
 
         return Filename

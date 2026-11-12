@@ -41,7 +41,7 @@ maxApnicDbAge = 30
 
 #
 # END OF CONFIGURATION SECTION
-import sys, os, time, stat, StringIO, commands, re
+import sys, os, time, stat, io, subprocess, re
 class IP2Country:
     """
     Looks up IP addresses in APNIC database
@@ -338,22 +338,22 @@ class IP2Country:
     
             ipbit0, ipbit1, ipbit2, ipbit3 = ip.split(".")
     
-            if not ipTree.has_key(ipbit0):
+            if ipbit0 not in ipTree:
                 ipTree0 = ipTree[ipbit0] = {}
             else:
                 ipTree0 = ipTree[ipbit0]
     
-            if not ipTree0.has_key(ipbit1):
+            if ipbit1 not in ipTree0:
                 ipTree1 = ipTree0[ipbit1] = {}
             else:
                 ipTree1 = ipTree0[ipbit1]
     
-            if not ipTree1.has_key(ipbit2):
+            if ipbit2 not in ipTree1:
                 ipTree2 = ipTree1[ipbit2] = {}
             else:
                 ipTree2 = ipTree1[ipbit2]
     
-            if not ipTree2.has_key(ipbit3):
+            if ipbit3 not in ipTree2:
                 ipTree3 = ipTree2[ipbit3] = country
             else:
                 ipTree3 = ipTree2[ipbit3]
@@ -382,7 +382,7 @@ class IP2Country:
         bit0, bit1, bit2, bit3 = ipaddr.split(".")
     
         # consult cached IPs
-        if self.specificIPs.has_key(ipaddr):
+        if ipaddr in self.specificIPs:
             cc = self.cs[ipaddr]
             return cc, self.countryCodes.get(cc, '???')
     
@@ -393,30 +393,30 @@ class IP2Country:
         # not in cache IPs - consult APNIC database
         db = self.db
        
-        if db.has_key(bit0):
+        if bit0 in db:
             db1 = db[bit0]
-        elif db.has_key("0"):
+        elif "0" in db:
             db1 = db["0"]
         else:
             return self.lookupWhois(ipaddr) # not found
         
-        if db1.has_key(bit1):
+        if bit1 in db1:
             db2 = db1[bit1]
-        elif db1.has_key("0"):
+        elif "0" in db1:
             db2 = db1["0"]
         else:
             return self.lookupWhois(ipaddr) # not found
         
-        if db2.has_key(bit2):
+        if bit2 in db2:
             db3 = db2[bit2]
-        elif db2.has_key("0"):
+        elif "0" in db2:
             db3 = db2["0"]
         else:
             return self.lookupWhois(ipaddr) # not found
         
-        if db3.has_key(bit3):
+        if bit3 in db3:
             cc = db3[bit3]
-        elif db3.has_key("0"):
+        elif "0" in db3:
             cc = db3["0"]
         else:
             cc = None
@@ -438,7 +438,7 @@ class IP2Country:
         """
         self.log("Performing whois query for %s" % ipaddr)
         cc = None
-        lines = commands.getoutput("whois %s" % ipaddr).strip().split("\n")
+        lines = subprocess.getoutput("whois %s" % ipaddr).strip().split("\n")
     
         #print "\n * ".join(lines)
     
@@ -476,7 +476,7 @@ class IP2Country:
         self.log("Logging in...")
         conn.login()
         
-        s = StringIO.StringIO()
+        s = io.StringIO()
     
         self.log("Downloading ftp://%s" % path)
         conn.retrbinary("RETR /"+path, file(self.apnicFileDb, "wb").write)
@@ -485,24 +485,24 @@ class IP2Country:
         self.log("Closing server connection")
     def log(self, msg):
         if self.verbose:
-            print "IP2Country:%s" % msg
+            print("IP2Country:%s" % msg)
 if __name__ == '__main__':
     
     import traceback, readline
 
     # run a demo
-    print "I2PCountry demo"
+    print("I2PCountry demo")
 
     i2pc = IP2Country(verbose=True)
 
     while True:
-        print "Enter an IP address, or empty line to quit"
-        raw = raw_input("> ").strip()
+        print("Enter an IP address, or empty line to quit")
+        raw = input("> ").strip()
         if raw == '':
             sys.exit(0)
         try:
             cc, country = i2pc.lookup(raw)
-            print "%s => %s (%s)" % (raw, cc, country)
+            print("%s => %s (%s)" % (raw, cc, country))
         except:
             traceback.print_exc()
-            print "Lookup of IP address %s failed" % repr(raw)
+            print("Lookup of IP address %s failed" % repr(raw))

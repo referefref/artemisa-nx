@@ -22,7 +22,7 @@ import sys
 # Set a path to the main root
 sys.path.append("../")
 
-from commons import RemoveComments
+from .commons import RemoveComments
 from modules.logger import logger
 
 def CheckFingerprint(SourceData):
@@ -62,7 +62,7 @@ def CheckFingerprint(SourceData):
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
-         print CheckFingerprint(sys.argv[1])
+         print(CheckFingerprint(sys.argv[1]))
     else:
-        print "Arguments are required!"
+        print("Arguments are required!")
         sys.exit(1)

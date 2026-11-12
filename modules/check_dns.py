@@ -26,6 +26,7 @@ from subprocess import PIPE
 from libs.IPy.IPy import *       # Module to deal with IPs
 
 from modules.logger import logger
+from modules.commons import IsSafeArgument
 
 def CheckDNS(strIP, verbose):
 
@@ -75,10 +76,17 @@ def CheckDNS(strIP, verbose):
     else:
          
         # The DNS analysis consists of a DNS lookup and a WHOIS search.
+
+        # artemisa-nx: the name comes from the SIP message, so it is checked and passed to
+        # dig and whois as a separate argument instead of through a shell.
+        if not IsSafeArgument(strIP):
+            logger.warning("Not looking up " + repr(strIP) + " (not a plain host name).")
+            return -1
             
         try:      
-            Command = "dig " + strIP + " A +noall +answer +short"  
-            Process = Popen(Command, shell=True, stdout=PIPE)
+            Args = ["dig", strIP, "A", "+noall", "+answer", "+short"]
+            Command = " ".join(Args)
+            Process = Popen(Args, stdout=PIPE, universal_newlines=True)
             Process.wait()
             Data = Process.communicate()[0].strip().split("\n")
             IPResolved = Data[len(Data)-1]
@@ -100,8 +108,9 @@ def CheckDNS(strIP, verbose):
         # Try to use the whois command. If it fails, perhaps the command is not installed.
         try:
             # Store the whois' return in a variable.
-            Command = "whois " + strIP
-            Process = Popen(Command, shell=True, stdout=PIPE)
+            Args = ["whois", strIP]
+            Command = " ".join(Args)
+            Process = Popen(Args, stdout=PIPE, universal_newlines=True, errors="replace")
             Process.wait()
             Data = Process.communicate()[0]
             
@@ -132,7 +141,7 @@ def CheckDNS(strIP, verbose):
     
 if __name__ == '__main__':
     if len(sys.argv) > 2:
-        print CheckDNS(sys.argv[1], sys.argv[2])
+        print(CheckDNS(sys.argv[1], sys.argv[2]))
     else:
-        print "Arguments are required!"
+        print("Arguments are required!")
         sys.exit(1)

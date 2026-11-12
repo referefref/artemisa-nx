@@ -21,8 +21,47 @@ ON_SPIT_SCRIPT_PATH = SCRIPTS_DIR + "on_spit.sh"
 ON_SCANNING_SCRIPT_PATH = SCRIPTS_DIR + "on_scanning.sh"
 
 import os
+from subprocess import Popen, PIPE, STDOUT
 
 from modules.logger import logger
+
+def RunActionScript(Script, Template, Results):
+    """
+    artemisa-nx: runs an action script with the parameters defined in actions.conf. The template
+    is split into words first and the variables are replaced inside each word, so every word
+    becomes exactly one argument and nothing taken from the SIP message reaches a shell.
+    """
+    Values = {"$From_Extension$": Results.From_Extension,
+              "$From_IP$": Results.From_IP,
+              "$From_Port$": Results.From_Port,
+              "$From_Transport$": Results.From_Transport,
+              "$Contact_IP$": Results.Contact_IP,
+              "$Contact_Port$": Results.Contact_Port,
+              "$Contact_Transport$": Results.Contact_Transport,
+              "$Connection_IP$": Results.Connection,
+              "$Owner_IP$": Results.Owner,
+              "$Tool_name$": Results.ToolName}
+    try:
+        Values["$Via_IP$"] = Results.Via[0][0]
+        Values["$Via_Port$"] = Results.Via[0][1]
+    except:
+        pass
+
+    Args = []
+    for Word in Template.split():
+        for Key in Values:
+            Word = Word.replace(Key, Values[Key])
+        Args.append(Word)
+
+    Command = ["bash", Script] + Args
+    logger.info("Executing " + " ".join(Command) + " ...")
+    try:
+        Process = Popen(Command, stdout=PIPE, stderr=STDOUT, universal_newlines=True, errors="replace")
+        for line in Process.communicate()[0].splitlines():
+            if line.strip() != "":
+                logger.info(line.strip())
+    except Exception as e:
+        logger.error("Cannot execute script. Details: " + str(e))
 
 def Correlator(Results, Flood, On_flood_parameters, On_SPIT_parameters, On_scanning_parameters):
     """
@@ -76,33 +115,7 @@ def CheckIfFlood(Results, Flood, On_flood_parameters):
         prtString = "* A flooding attack."; Results.Results_File_Buffer += "\n" + prtString; logger.info(prtString)
         prtString = ""; Results.Results_File_Buffer += "\n" + prtString; logger.info(prtString)
 
-        On_flood_parameters = On_flood_parameters.replace("$From_Extension$", Results.From_Extension)
-        On_flood_parameters = On_flood_parameters.replace("$From_IP$", Results.From_IP)
-        On_flood_parameters = On_flood_parameters.replace("$From_Port$", Results.From_Port)
-        On_flood_parameters = On_flood_parameters.replace("$From_Transport$", Results.From_Transport)
-        On_flood_parameters = On_flood_parameters.replace("$Contact_IP$", Results.Contact_IP)
-        On_flood_parameters = On_flood_parameters.replace("$Contact_Port$", Results.Contact_Port)
-        On_flood_parameters = On_flood_parameters.replace("$Contact_Transport$", Results.Contact_Transport)
-        On_flood_parameters = On_flood_parameters.replace("$Connection_IP$", Results.Connection)
-        On_flood_parameters = On_flood_parameters.replace("$Owner_IP$", Results.Owner)
-        On_flood_parameters = On_flood_parameters.replace("$Tool_name$", Results.ToolName)
-
-        try:
-            On_flood_parameters = On_flood_parameters.replace("$Via_IP$", Results.Via[0][0])
-            On_flood_parameters = On_flood_parameters.replace("$Via_Port$", Results.Via[0][1])
-        except:
-            pass
-
-        Command = "bash " + ON_FLOOD_SCRIPT_PATH + " " + On_flood_parameters
-        logger.info("Executing " + Command + " ...")
-        # Execute a script
-        try:
-            cmd_out=os.popen(Command)
-            for line in cmd_out.readlines():
-                if line.strip() != "":
-                    logger.info(line.strip())
-        except Exception, e:
-            logger.error("Cannot execute script. Details: " + str(e))
+        RunActionScript(ON_FLOOD_SCRIPT_PATH, On_flood_parameters, Results)
 
     return Flood
 
@@ -118,33 +131,7 @@ def CheckIfSPIT(Results, On_SPIT_parameters):
         prtString = "* A SPIT call."; Results.Results_File_Buffer += "\n" + prtString; logger.info(prtString)
         prtString = ""; Results.Results_File_Buffer += "\n" + prtString; logger.info(prtString)
 
-        On_SPIT_parameters = On_SPIT_parameters.replace("$From_Extension$", Results.From_Extension)
-        On_SPIT_parameters = On_SPIT_parameters.replace("$From_IP$", Results.From_IP)
-        On_SPIT_parameters = On_SPIT_parameters.replace("$From_Port$", Results.From_Port)
-        On_SPIT_parameters = On_SPIT_parameters.replace("$From_Transport$", Results.From_Transport)
-        On_SPIT_parameters = On_SPIT_parameters.replace("$Contact_IP$", Results.Contact_IP)
-        On_SPIT_parameters = On_SPIT_parameters.replace("$Contact_Port$", Results.Contact_Port)
-        On_SPIT_parameters = On_SPIT_parameters.replace("$Contact_Transport$", Results.Contact_Transport)
-        On_SPIT_parameters = On_SPIT_parameters.replace("$Connection_IP$", Results.Connection)
-        On_SPIT_parameters = On_SPIT_parameters.replace("$Owner_IP$", Results.Owner)
-        On_SPIT_parameters = On_SPIT_parameters.replace("$Tool_name$", Results.ToolName)
-
-        try:
-            On_SPIT_parameters = On_SPIT_parameters.replace("$Via_IP$", Results.Via[0][0])
-            On_SPIT_parameters = On_SPIT_parameters.replace("$Via_Port$", Results.Via[0][1])
-        except:
-            pass
-
-        Command = "bash " + ON_SPIT_SCRIPT_PATH + " " + On_SPIT_parameters
-        logger.info("Executing " + Command + " ...")
-        # Execute a script
-        try:
-            cmd_out=os.popen(Command)
-            for line in cmd_out.readlines():
-                if line.strip() != "":
-                    logger.info(line.strip())
-        except Exception, e:
-            logger.error("Cannot execute script. Details: " + str(e))
+        RunActionScript(ON_SPIT_SCRIPT_PATH, On_SPIT_parameters, Results)
         
         return True
 
@@ -162,33 +149,7 @@ def CheckIfScanning(Results, On_scanning_parameters):
         prtString = "* A scanning attempt."; Results.Results_File_Buffer += "\n" + prtString; logger.info(prtString)
         prtString = ""; Results.Results_File_Buffer += "\n" + prtString; logger.info(prtString)
     
-        On_scanning_parameters = On_scanning_parameters.replace("$From_Extension$", Results.From_Extension)
-        On_scanning_parameters = On_scanning_parameters.replace("$From_IP$", Results.From_IP)
-        On_scanning_parameters = On_scanning_parameters.replace("$From_Port$", Results.From_Port)
-        On_scanning_parameters = On_scanning_parameters.replace("$From_Transport$", Results.From_Transport)
-        On_scanning_parameters = On_scanning_parameters.replace("$Contact_IP$", Results.Contact_IP)
-        On_scanning_parameters = On_scanning_parameters.replace("$Contact_Port$", Results.Contact_Port)
-        On_scanning_parameters = On_scanning_parameters.replace("$Contact_Transport$", Results.Contact_Transport)
-        On_scanning_parameters = On_scanning_parameters.replace("$Connection_IP$", Results.Connection)
-        On_scanning_parameters = On_scanning_parameters.replace("$Owner_IP$", Results.Owner)
-        On_scanning_parameters = On_scanning_parameters.replace("$Tool_name$", Results.ToolName)
-        
-        try:
-            On_scanning_parameters = On_scanning_parameters.replace("$Via_IP$", Results.Via[0][0])
-            On_scanning_parameters = On_scanning_parameters.replace("$Via_Port$", Results.Via[0][1])
-        except:
-            pass
-
-        Command = "bash " + ON_SCANNING_SCRIPT_PATH + " " + On_scanning_parameters
-        logger.info("Executing " + Command + " ...")
-        # Execute a script
-        try:
-            cmd_out=os.popen(Command)
-            for line in cmd_out.readlines():
-                if line.strip() != "":
-                    logger.info(line.strip())
-        except Exception, e:
-            logger.error("Cannot execute script. Details: " + str(e))
+        RunActionScript(ON_SCANNING_SCRIPT_PATH, On_scanning_parameters, Results)
 
         return True
 

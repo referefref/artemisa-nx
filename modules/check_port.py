@@ -25,23 +25,35 @@ from subprocess import PIPE
 from libs.IPy.IPy import *       # Module to deal with IPs
 
 from modules.logger import logger
+from modules.commons import IsSafeArgument
 
 def CheckPort(strIP, Port, Transport, verbose):
     """
     This function checks a given IP:port and it's used for both SIP and media ports analysis    
     """    
     if strIP == "" or Port == "": return -1
+
+    # artemisa-nx: values come from the SIP message, so they are checked and passed to nmap
+    # as separate arguments instead of through a shell.
+    if not IsSafeArgument(strIP) or not Port.isdigit():
+        logger.warning("Not scanning " + repr(strIP) + ":" + repr(Port) + " (not a plain host and port).")
+        return -1
     
     DataToSend = ""
     
     try:        
         if Transport == "udp":
-            Command = "nmap -sU " + strIP + " -p " + Port
-            Process = Popen(Command, shell=True, stdout=PIPE)
+            Args = ["nmap", "-sU", strIP, "-p", Port]
+            Command = " ".join(Args)
+            Process = Popen(Args, stdout=PIPE, universal_newlines=True)
 
         elif Transport == "tcp":
-            Command = "nmap -sS " + strIP + " -p " + Port
-            Process = Popen(Command, shell=True, stdout=PIPE)
+            Args = ["nmap", "-sS", strIP, "-p", Port]
+            Command = " ".join(Args)
+            Process = Popen(Args, stdout=PIPE, universal_newlines=True)
+
+        else:
+            return -1
             
         if verbose:
             DataToSend = "+ Verbose" + "\n"
@@ -82,7 +94,7 @@ def CheckPort(strIP, Port, Transport, verbose):
     
 if __name__ == '__main__':
     if len(sys.argv) == 5:
-        print CheckPort(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+        print(CheckPort(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]))
     else:
-        print "Arguments are required!"
+        print("Arguments are required!")
         sys.exit(1)

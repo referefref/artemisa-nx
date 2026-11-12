@@ -22,7 +22,7 @@ RESOURCES_DIR = "./res/"
 CONFIG_FILE_PATH = CONFIG_DIR + "artemisa.conf"
 ARTEMISA_WEBLOGO_PATH = RESOURCES_DIR + "weblogo.gif"
 
-import ConfigParser                 # Read configuration files.
+import configparser                 # Read configuration files.
 from smtplib import *
 from email.mime.image import MIMEImage
 from email.mime.text import MIMEText
@@ -37,7 +37,7 @@ class Email():
     
     def __init__(self):
     
-        config = ConfigParser.ConfigParser()
+        config = configparser.ConfigParser()
         try:
             strTemp = config.read(CONFIG_FILE_PATH)
         except:
@@ -130,6 +130,6 @@ class Email():
         
         except SMTPAuthenticationError:
             logger.warning("E-mail account username and/or password refused by SMTP server.")
-        except Exception, e:
+        except Exception as e:
             logger.error("E-mail notification couldn't be sent. Error: " + str(e))
         

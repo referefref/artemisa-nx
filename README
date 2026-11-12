@@ -1,3 +1,42 @@
+Adapted from http://artemisa.sourceforge.net/ (https://sourceforge.net/projects/artemisa/) by Rodrigo do Carmo, Mohamed Nassar and Pablo Masri.
+
+artemisa-nx
+***********
+
+artemisa-nx is the Artemisa 1.0.91 release (February 2011, the last release published on
+SourceForge) migrated from Python 2 to Python 3. Artemisa needs the PJSUA Python module of
+PJSIP. That module was written for Python 2 and PJSIP 1.x; since PJSIP 2.16 (2025) the same
+legacy module builds for Python 3, so artemisa-nx is used with PJSIP 2.16 or later
+(tested with PJSIP 2.17 and Python 3.11 on Debian 12). Behaviour, configuration files, log
+files and reports are unchanged except where listed below. The original README follows.
+
+Changes from the original
+=========================
+
+* Python 3 syntax (print, except ... as, configparser, input) and relative imports
+  inside the modules package.
+* libs/IPy updated from IPy 0.70 (Python 2 only) to IPy 1.01 (same BSD licence, see
+  libs/IPy/COPYING).
+* nmap, dig, whois and the on_flood/on_spit/on_scanning scripts are run without a
+  shell. The original built shell command lines from addresses, host names and ports
+  taken from the received SIP message; artemisa-nx passes them as separate arguments
+  and does not run nmap, dig or whois for values that are not a plain host name,
+  address or port. In actions.conf each word of a parameter template is one argument.
+* Comparisons of str with int that Python 3 rejects (results of CheckDNS and CheckPort,
+  the recorder and player ids) are written so that they behave as in Python 2.
+* When no sound device is found, the PJSUA null audio device is used, so calls are
+  still answered with the configured audio file and recorded (the original disabled
+  recording). This is what servers and containers without a sound card need.
+* When standard input is closed (for example when run as a service), Artemisa keeps
+  running instead of exiting; the interactive console works as before on a terminal.
+* The process name is set with a bytes argument to prctl (Python 3 ctypes).
+* libs/ip2country (not used by Artemisa) converted to Python 3 syntax.
+* Empty logs, results and recorded_calls directories are kept with .gitkeep files.
+
+Prerequisites for artemisa-nx: Python 3, PJSIP 2.16 or later built with CFLAGS=-fPIC and
+the legacy PJSUA module installed from pjsip-apps/src/python (python setup.py install),
+and optionally nmap, dnsutils (dig) and whois for the active checks.
+
 Artemisa 1.0
 ************
 
