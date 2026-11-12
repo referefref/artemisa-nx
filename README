@@ -30,6 +30,10 @@ Changes from the original
 * When standard input is closed (for example when run as a service), Artemisa keeps
   running instead of exiting; the interactive console works as before on a terminal.
 * The process name is set with a bytes argument to prctl (Python 3 ctypes).
+* Conference ports are disconnected at the end of a call only if they still exist.
+  PJSIP 1.x returned an error for a port that was already gone; PJSIP 2.x built with
+  assertions enabled aborts the process (it happened after every unanswered or
+  unacknowledged call).
 * libs/ip2country (not used by Artemisa) converted to Python 3 syntax.
 * Empty logs, results and recorded_calls directories are kept with .gitkeep files.
 

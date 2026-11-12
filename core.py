@@ -260,6 +260,16 @@ class MyAccountCallback(pj.AccountCallback):
                             
         #self.current_call.hangup()
 
+def SafeConfDisconnect(lib, source, sink):
+    """
+    artemisa-nx: disconnects two conference ports only if both exist. When a call ends PJSUA has
+    already removed its media (conference slot -1); PJSIP 1.x returned an error for that, while
+    PJSIP 2.x builds with assertions enabled abort the whole process.
+    """
+    if source is None or sink is None or source < 0 or sink < 0:
+        return
+    lib.conf_disconnect(source, sink)
+
 class MyCallCallback(pj.CallCallback):
     """
     Callback to receive events from Call
@@ -290,14 +300,14 @@ class MyCallCallback(pj.CallCallback):
                     self.call_slot = self.call.info().conf_slot
                         
                     # Disconnect the call with the WAV recorder
-                    self.lib.conf_disconnect(self.call_slot, self.rec_slot)
+                    SafeConfDisconnect(self.lib, self.call_slot, self.rec_slot)
                     
-                    self.lib.recorder_destroy(self.rec_id)
+                    if self.rec_id >= 0: self.lib.recorder_destroy(self.rec_id)
 
                     # Disconnect the call from the player
-                    self.lib.conf_disconnect(self.player_slot, self.call_slot)
+                    SafeConfDisconnect(self.lib, self.player_slot, self.call_slot)
                     
-                    self.lib.player_destroy(self.player_id)
+                    if self.player_id >= 0: self.lib.player_destroy(self.player_id)
                     
                 except:
                     logger.warning("Error while closing the conferences in method on_state().")
@@ -367,10 +377,10 @@ class MyCallCallback(pj.CallCallback):
                 self.call_slot = self.call.info().conf_slot
                 
                 # Disconnect the call with the WAV recorder
-                pj.Lib.instance().conf_disconnect(self.call_slot, self.lib.recorder_get_slot(self.rec_id))
+                if self.rec_id >= 0: SafeConfDisconnect(pj.Lib.instance(), self.call_slot, self.lib.recorder_get_slot(self.rec_id))
 
                 # Disconnect the call from the player
-                pj.Lib.instance().conf_disconnect(self.lib.player_get_slot(self.player_id), self.call_slot)
+                if self.player_id >= 0: SafeConfDisconnect(pj.Lib.instance(), self.lib.player_get_slot(self.player_id), self.call_slot)
 
             except:
                 logger.warning("Error while closing the conferences in method on_media_state()")
